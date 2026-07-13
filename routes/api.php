@@ -12,7 +12,10 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// throttle:120,1 keys by the authenticated user (auth:sanctum runs first and
+// resolves them), not by IP — otherwise everyone behind the same NAT/proxy
+// would share one bucket.
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'me']);
 
