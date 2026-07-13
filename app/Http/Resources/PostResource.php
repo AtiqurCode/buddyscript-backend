@@ -30,6 +30,11 @@ class PostResource extends JsonResource
             'likes_count' => $this->likes_count ?? $this->likes()->count(),
             'comments_count' => $this->comments_count ?? $this->topLevelComments()->count(),
             'liked_by_me' => (bool) ($this->liked_by_me ?? false),
+            // Preview only (most recent 5), not the full liker list — see
+            // the comment on the eager-load in PostController@index.
+            'liked_by' => UserResource::collection(
+                $this->whenLoaded('likes', fn () => $this->likes->take(5), collect())
+            ),
         ];
     }
 }

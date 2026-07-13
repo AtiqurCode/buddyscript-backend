@@ -24,6 +24,12 @@ class PostController extends Controller
         $posts = Post::query()
             ->visibleTo($userId)
             ->with('user')
+            // Preview of who liked, embedded with the feed so the avatar
+            // stack renders without a follow-up request per post. Not
+            // capped at the query level — Eloquent applies a relation's
+            // ->limit() across the whole eager-load batch, not per post —
+            // so PostResource takes only the first 5 after load instead.
+            ->with(['likes' => fn ($query) => $query->orderByPivot('id', 'desc')])
             ->withCount(['likes', 'topLevelComments as comments_count'])
             ->withExists(['likes as liked_by_me' => fn ($query) => $query->where('user_id', $userId)])
             ->latest('id')
@@ -46,6 +52,7 @@ class PostController extends Controller
         }
 
         $post->load('user')->loadCount(['likes', 'topLevelComments as comments_count']);
+        $post->setRelation('likes', collect());
         $post->liked_by_me = false; // can't have liked your own post before it existed
 
         return (new PostResource($post))->response()->setStatusCode(201);
@@ -63,7 +70,7 @@ class PostController extends Controller
         ]);
     }
 
-    /** Who liked this post — the "who liked" requirement, on demand rather than embedded in every feed row. */
+    /** Full "who liked" list, paginated — the feed response only embeds a 5-liker preview. */
     public function likes(Request $request, Post $post)
     {
         $this->authorize('view', $post);
