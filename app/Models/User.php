@@ -47,4 +47,25 @@ class User extends Authenticatable
     {
         return $this->morphedByMany(Comment::class, 'likeable', 'likes')->withTimestamps();
     }
+
+    /**
+     * The frontend's design ships a handful of placeholder headshots but no
+     * avatar-upload feature is in scope — this just spreads users
+     * deterministically across that existing pool instead of every user
+     * rendering with the same picture.
+     */
+    public function avatarUrl(): string
+    {
+        static $pool = [
+            '/assets/images/Avatar.png',
+            '/assets/images/chat_profile.png',
+            '/assets/images/chat_profile1.png',
+            '/assets/images/people1.png',
+            '/assets/images/people2.png',
+            '/assets/images/people3.png',
+            '/assets/images/profile.png',
+        ];
+
+        return $pool[$this->id % count($pool)];
+    }
 }
