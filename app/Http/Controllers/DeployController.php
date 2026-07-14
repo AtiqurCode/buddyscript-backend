@@ -9,10 +9,10 @@ use Illuminate\Http\Response;
 class DeployController extends Controller
 {
     /**
-     * Secret-gated migrate / cache clear for cPanel when SSH isn't available.
+     * Secret-gated artisan helper for cPanel when SSH isn't available.
      *
      * GET /deploy?key=DEPLOY_SECRET&run=all
-     * Allowed run: migrate | clear | all
+     * Allowed run: migrate | clear | fresh | all
      */
     public function __invoke(Request $request, Kernel $kernel): Response
     {
@@ -35,6 +35,9 @@ class DeployController extends Controller
             'clear' => [
                 ['optimize:clear'],
             ],
+            'fresh' => [
+                ['migrate:fresh', ['--seed' => true, '--force' => true]],
+            ],
             'all' => [
                 ['migrate', ['--force' => true]],
                 ['optimize:clear'],
@@ -44,7 +47,7 @@ class DeployController extends Controller
 
         if ($commands === null) {
             return response(
-                "Unknown run={$run}\nAllowed: migrate | clear | all\n",
+                "Unknown run={$run}\nAllowed: migrate | clear | fresh | all\n",
                 400,
             )->header('Content-Type', 'text/plain; charset=utf-8');
         }
