@@ -35,6 +35,14 @@ class PostResource extends JsonResource
             'liked_by' => UserResource::collection(
                 $this->whenLoaded('likes', fn () => $this->likes->take(5), collect())
             ),
+            // Only the single latest top-level comment — the rest load via
+            // GET /posts/{post}/comments when "view previous comments" is
+            // clicked. Null both when there are no comments yet and when
+            // the relation wasn't eager-loaded at all.
+            'latest_comment' => $this->whenLoaded(
+                'latestComment',
+                fn () => $this->latestComment ? new CommentResource($this->latestComment) : null
+            ),
         ];
     }
 }

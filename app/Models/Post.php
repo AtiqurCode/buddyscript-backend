@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -42,6 +43,20 @@ class Post extends Model implements HasMedia
     public function topLevelComments(): HasMany
     {
         return $this->comments()->whereNull('parent_id');
+    }
+
+    /**
+     * The single most recent top-level comment, embedded directly in the
+     * feed response so a post's card has something to show without a
+     * follow-up request. Older comments only load when "view previous
+     * comments" is clicked (GET /posts/{post}/comments).
+     */
+    public function latestComment(): HasOne
+    {
+        return $this->hasOne(Comment::class)->ofMany(
+            ['id' => 'max'],
+            fn (Builder $query) => $query->whereNull('parent_id'),
+        );
     }
 
     public function likes(): MorphToMany

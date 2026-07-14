@@ -9,9 +9,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Comment
  *
- * Used for both comments and replies. `replies` is only present when
- * eager-loaded (top-level comments load theirs; a reply doesn't nest
- * further, since replies are one level deep by design).
+ * Used for both comments and replies. `replies_count` is always the number
+ * of direct replies (0 for a reply itself, since replies are one level deep
+ * by design) — the replies themselves are never embedded here, only
+ * fetched on demand via GET /comments/{comment}/replies.
  */
 class CommentResource extends JsonResource
 {
@@ -27,7 +28,7 @@ class CommentResource extends JsonResource
             'created_at' => $this->created_at,
             'likes_count' => $this->likes_count ?? $this->likes()->count(),
             'liked_by_me' => (bool) ($this->liked_by_me ?? false),
-            'replies' => CommentResource::collection($this->whenLoaded('replies')),
+            'replies_count' => $this->replies_count ?? 0,
         ];
     }
 }
