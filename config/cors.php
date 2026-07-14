@@ -22,10 +22,12 @@ return [
     // Token auth (Sanctum personal access tokens, not cookies) means a
     // wildcard here wouldn't be a CSRF risk either way, but listing the
     // known frontend origins explicitly is still the tighter default.
-    'allowed_origins' => [
+    'allowed_origins' => array_values(array_filter(array_unique([
         env('FRONTEND_URL', 'https://buddyscript.test'),
+        'https://buddyscripts.netlify.app',
         'http://localhost:5173',
-    ],
+        ...array_filter(array_map('trim', explode(',', (string) env('FRONTEND_URLS', '')))),
+    ]))),
 
     'allowed_origins_patterns' => [],
 
