@@ -47,15 +47,14 @@ jobs:
           local-dir: ./
           dangerous-clean-slate: false
           exclude: |
-            **/.git*
-            **/.git*/**
+            **/.git
+            **/.git/**
             **/.github/**
             **/.DS_Store
             **/.env
             **/.env.*
             **/.editorconfig
             **/.gitattributes
-            **/.gitignore
             **/.npmrc
             **/.phpunit.result.cache
             **/.phpunit.cache/**
@@ -63,10 +62,8 @@ jobs:
             **/tests/**
             **/phpunit.xml
             **/README.md
-            **/storage/logs/**
-            **/storage/framework/cache/**
-            **/storage/framework/sessions/**
-            **/storage/framework/views/**
+            **/storage/logs/*.log
+            **/storage/framework/views/*.php
             **/storage/pail/**
             **/bootstrap/cache/*.php
             **/database/*.sqlite

@@ -16,6 +16,8 @@ class DeployController extends Controller
      */
     public function __invoke(Request $request, Kernel $kernel): Response
     {
+        require base_path('bootstrap/ensure-directories.php');
+
         $secret = (string) config('app.deploy_secret', '');
         $key = (string) $request->query('key', '');
 
