@@ -50,7 +50,12 @@ return [
     |
     */
 
-    'expiration' => null,
+    // 30 days. Sanctum checks this against the token's created_at on every
+    // request (Guard::supportsCredentials()) — no refresh flow needed, an
+    // expired token just stops authenticating and the frontend already
+    // treats any failed /user request as "not logged in" (clears the
+    // stored token, redirects to /login).
+    'expiration' => 60 * 24 * 30,
 
     /*
     |--------------------------------------------------------------------------
