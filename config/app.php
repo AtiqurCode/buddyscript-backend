@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Deploy runner secret
+    |--------------------------------------------------------------------------
+    |
+    | Used by GET /deploy to run migrate / cache clear on cPanel without SSH.
+    | Leave empty locally. Fail-closed when empty.
+    |
+    */
+
+    'deploy_secret' => env('DEPLOY_SECRET'),
+
 ];
