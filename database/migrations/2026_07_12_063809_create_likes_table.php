@@ -18,8 +18,12 @@ return new class extends Migration
             // Polymorphic target — a Post or a Comment (replies are
             // comments too), so posts, comments and replies all reuse the
             // same table and the same User::morphedByMany() relationship
-            // instead of three separate like systems.
-            $table->morphs('likeable');
+            // instead of three separate like systems. Defined manually
+            // rather than via morphs() so it doesn't also create morphs()'s
+            // own (type, id) index — the unique index below already starts
+            // with the same two columns and serves the same lookups.
+            $table->string('likeable_type');
+            $table->unsignedBigInteger('likeable_id');
 
             $table->timestamps();
 

@@ -32,6 +32,13 @@ return new class extends Migration
             // Covers "top-level comments for post X" (parent_id IS NULL)
             // and "replies for comment Y" in created order.
             $table->index(['post_id', 'parent_id', 'created_at']);
+
+            // "replies for comment Y" (GET /comments/{comment}/replies) filters
+            // by parent_id alone, not post_id — the index above can't serve
+            // that since post_id is its leading column. This one covers it
+            // directly, id-ordered so the oldest-first reply listing doesn't
+            // need a separate filesort.
+            $table->index(['parent_id', 'id']);
         });
     }
 

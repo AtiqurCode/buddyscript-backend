@@ -13,32 +13,40 @@ use Illuminate\Http\Request;
 class CommentController extends Controller
 {
     /**
-     * Top-level comments for a post, newest first, each with its replies
-     * eager-loaded. Replies aren't paginated separately — in practice a
-     * single comment gets a handful of replies, not thousands, so loading
-     * them all alongside their parent is simpler than another round trip.
+     * Top-level comments for a post, newest first. Replies aren't included
+     * here — only their count — the same way the feed embeds just one
+     * comment. A comment's replies load separately via
+     * GET /comments/{comment}/replies once the user actually expands them.
      */
     public function index(Request $request, Post $post)
     {
         $this->authorize('view', $post);
         $userId = $request->user()->id;
 
-        $likedByMe = fn ($query) => $query->where('user_id', $userId);
-
         $comments = $post->topLevelComments()
             ->with('user')
-            ->withCount('likes')
-            ->withExists(['likes as liked_by_me' => $likedByMe])
-            ->with(['replies' => function ($query) use ($likedByMe) {
-                $query->with('user')
-                    ->withCount('likes')
-                    ->withExists(['likes as liked_by_me' => $likedByMe])
-                    ->oldest('id');
-            }])
+            ->withCount(['likes', 'replies'])
+            ->withExists(['likes as liked_by_me' => fn ($query) => $query->where('user_id', $userId)])
             ->latest('id')
             ->cursorPaginate(10);
 
         return CommentResource::collection($comments);
+    }
+
+    /** A comment's replies, oldest first, paginated — loaded on demand when the user expands them. */
+    public function replies(Request $request, Comment $comment)
+    {
+        $this->authorize('view', $comment->post);
+        $userId = $request->user()->id;
+
+        $replies = $comment->replies()
+            ->with('user')
+            ->withCount('likes')
+            ->withExists(['likes as liked_by_me' => fn ($query) => $query->where('user_id', $userId)])
+            ->oldest('id')
+            ->cursorPaginate(10);
+
+        return CommentResource::collection($replies);
     }
 
     public function store(StoreCommentRequest $request, Post $post)
@@ -52,9 +60,9 @@ class CommentController extends Controller
         ]);
 
         $comment->load('user');
-        $comment->setRelation('replies', collect());
         $comment->likes_count = 0;
         $comment->liked_by_me = false;
+        $comment->replies_count = 0;
 
         return (new CommentResource($comment))->response()->setStatusCode(201);
     }
@@ -73,6 +81,7 @@ class CommentController extends Controller
         $reply->load('user');
         $reply->likes_count = 0;
         $reply->liked_by_me = false;
+        $reply->replies_count = 0; // replies are one level deep by design
 
         return (new CommentResource($reply))->response()->setStatusCode(201);
     }

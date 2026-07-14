@@ -22,6 +22,12 @@ return new class extends Migration
             // ones" — this composite index covers the public-feed half of
             // that query directly, so it stays fast regardless of table size.
             $table->index(['visibility', 'created_at']);
+
+            // A foreign key alone doesn't get an index on every driver
+            // (SQLite doesn't auto-index FK columns the way MySQL does),
+            // and this one is queried directly — the "my own private
+            // posts" branch of Post::scopeVisibleTo() filters on it.
+            $table->index('user_id');
         });
     }
 

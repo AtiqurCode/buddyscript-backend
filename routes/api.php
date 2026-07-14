@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
     Route::post('/posts/{post}/comments', [CommentController::class, 'store']);
+    Route::get('/comments/{comment}/replies', [CommentController::class, 'replies']);
     Route::post('/comments/{comment}/replies', [CommentController::class, 'storeReply']);
     Route::post('/comments/{comment}/like', [CommentController::class, 'like']);
     Route::get('/comments/{comment}/likes', [CommentController::class, 'likes']);

@@ -30,6 +30,14 @@ class PostController extends Controller
             // ->limit() across the whole eager-load batch, not per post —
             // so PostResource takes only the first 5 after load instead.
             ->with(['likes' => fn ($query) => $query->orderByPivot('id', 'desc')])
+            // Just the latest top-level comment, not the thread — see
+            // Post::latestComment(). Replies never come along with the
+            // feed at all, only their count.
+            ->with(['latestComment' => function ($query) use ($userId) {
+                $query->with('user')
+                    ->withCount('replies')
+                    ->withExists(['likes as liked_by_me' => fn ($q) => $q->where('user_id', $userId)]);
+            }])
             ->withCount(['likes', 'topLevelComments as comments_count'])
             ->withExists(['likes as liked_by_me' => fn ($query) => $query->where('user_id', $userId)])
             ->latest('id')
@@ -53,6 +61,7 @@ class PostController extends Controller
 
         $post->load('user')->loadCount(['likes', 'topLevelComments as comments_count']);
         $post->setRelation('likes', collect());
+        $post->setRelation('latestComment', null); // brand new post, no comments yet
         $post->liked_by_me = false; // can't have liked your own post before it existed
 
         return (new PostResource($post))->response()->setStatusCode(201);
