@@ -1,0 +1,74 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, pdo, tokenizer, xml, ctype, json, bcmath, fileinfo, gd
+          tools: composer:v2
+
+      - name: Install PHP Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+      - name: Prepare storage directories for deploy
+        run: |
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
+          touch storage/framework/cache/data/.gitkeep
+          touch storage/framework/sessions/.gitkeep
+          touch storage/framework/views/.gitkeep
+          touch storage/logs/.gitkeep
+
+      - name: Deploy to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          local-dir: ./
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git/**
+            **/.github/**
+            **/.cursor/**
+            **/node_modules/**
+            **/tests/**
+            **/database/*.sqlite*
+            **/.env
+            **/auth.json
+            **/.phpunit.cache/**
+            **/.phpunit.result.cache
+            **/phpunit.xml
+            **/.idea/**
+            **/.vscode/**
+            **/.fleet/**
+            **/.nova/**
+            **/.zed/**
+            **/Homestead.json
+            **/Homestead.yaml
+            **/npm-debug.log
+            **/yarn-error.log
+            **/storage/pail/**
+            **/public/hot
+            **/public/storage
+            **/README.md
